@@ -65,9 +65,7 @@ async function getGodotVersion(): Promise<string> {
     },
   };
   await exec('godot', ['--version'], options);
-  if (version.includes('.official')) {
-    version = version.replace('.official', '');
-  }
+  version = version.replace('.official', '');
   core.info(`Godot version is ${version}`);
   return version;
 }

@@ -10401,9 +10401,7 @@ function getGodotVersion() {
             },
         };
         yield Object(exec.exec)('godot', ['--version'], options);
-        if (version.includes('.official')) {
-            version = version.replace('.official', '');
-        }
+        version = version.replace('.official', '');
         Object(core.info)(`Godot version is ${version}`);
         return version;
     });
