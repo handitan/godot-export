@@ -10392,17 +10392,34 @@ function prepareExecutable() {
     });
 }
 function getGodotVersion() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         let version = '';
-        const options = {};
-        options.listeners = {
-            stdout: (data) => {
-                version += data.toString();
-            },
+        // const options: ExecOptions = {
+        //   listeners: {
+        //     stdout: (data: Buffer) => {
+        //       version += data.toString('utf8');
+        //     },
+        //     stdline: (data: string) => {
+        //       version += data;
+        //     },
+        //     debug: (data: string) => {
+        //       version += data;
+        //     },
+        //   },
+        // };
+        const listener = (data) => {
+            version += data.toString();
         };
-        yield Object(exec.exec)('godot', ['--version'], options);
+        process.stdout.addListener('data', listener);
+        yield Object(exec.exec)('godot', ['--version']);
+        process.stdout.removeListener('data', listener);
+        version = (_a = version.split(/\s+/).pop()) !== null && _a !== void 0 ? _a : '';
+        version = version.trim();
         version = version.replace('.official', '');
-        Object(core.info)(`Godot version is ${version}`);
+        if (!version) {
+            throw new Error('Godot version could not be determined.');
+        }
         return version;
     });
 }

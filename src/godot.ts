@@ -1,7 +1,6 @@
 import { exec } from '@actions/exec';
 import * as core from '@actions/core';
 import * as io from '@actions/io';
-import { ExecOptions } from '@actions/exec/lib/interfaces';
 import * as path from 'path';
 import * as fs from 'fs';
 import { actionWorkingPath, relativeProjectPath, relativeProjectExportsPath, githubClient } from './main';
@@ -58,15 +57,35 @@ async function prepareExecutable(): Promise<void> {
 
 async function getGodotVersion(): Promise<string> {
   let version = '';
-  const options: ExecOptions = {};
-  options.listeners = {
-    stdout: (data: Buffer) => {
-      version += data.toString();
-    },
+  // const options: ExecOptions = {
+  //   listeners: {
+  //     stdout: (data: Buffer) => {
+  //       version += data.toString('utf8');
+  //     },
+  //     stdline: (data: string) => {
+  //       version += data;
+  //     },
+  //     debug: (data: string) => {
+  //       version += data;
+  //     },
+  //   },
+  // };
+
+  const listener = (data: Buffer): void => {
+    version += data.toString();
   };
-  await exec('godot', ['--version'], options);
+
+  process.stdout.addListener('data', listener);
+  await exec('godot', ['--version']);
+  process.stdout.removeListener('data', listener);
+  version = version.split(/\s+/).pop() ?? '';
+  version = version.trim();
   version = version.replace('.official', '');
-  core.info(`Godot version is ${version}`);
+
+  if (!version) {
+    throw new Error('Godot version could not be determined.');
+  }
+
   return version;
 }
 
