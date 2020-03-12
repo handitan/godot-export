@@ -1,15 +1,10 @@
 import { exec } from '@actions/exec';
 import * as core from '@actions/core';
 import * as io from '@actions/io';
+import { ExecOptions } from '@actions/exec/lib/interfaces';
 import * as path from 'path';
 import * as fs from 'fs';
-import {
-  actionWorkingPath,
-  relativeProjectPath,
-  relativeProjectExportsPath,
-  godotTemplateVersion,
-  githubClient,
-} from './main';
+import { actionWorkingPath, relativeProjectPath, relativeProjectExportsPath, githubClient } from './main';
 import * as ini from 'ini';
 import { ExportPresets, ExportPreset, ExportResult } from './types/GodotExport';
 import sanitize from 'sanitize-filename';
@@ -61,15 +56,32 @@ async function prepareExecutable(): Promise<void> {
   core.addPath(path.dirname(finalGodotPath));
 }
 
+async function getGodotVersion(): Promise<string> {
+  let version = '';
+  const options: ExecOptions = {};
+  options.listeners = {
+    stdout: (data: Buffer) => {
+      version += data.toString();
+    },
+  };
+  await exec('godot', ['--version'], options);
+  if (version.includes('.official')) {
+    version = version.replace('.official', '');
+  }
+  core.info(`Godot version is ${version}`);
+  return version;
+}
+
 async function prepareTemplates(): Promise<void> {
   const templateFile = path.join(actionWorkingPath, GODOT_TEMPLATES);
   const templatesPath = path.join(actionWorkingPath, 'templates');
   const tmpPath = path.join(actionWorkingPath, 'tmp');
+  const godotVersion = await getGodotVersion();
 
   await exec('unzip', ['-q', templateFile, '-d', actionWorkingPath]);
   await exec('mv', [templatesPath, tmpPath]);
   await io.mkdirP(templatesPath);
-  await exec('mv', [tmpPath, path.join(templatesPath, godotTemplateVersion)]);
+  await exec('mv', [tmpPath, path.join(templatesPath, godotVersion)]);
 }
 
 async function runExport(): Promise<ExportResult[]> {

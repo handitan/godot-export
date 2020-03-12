@@ -10391,15 +10391,33 @@ function prepareExecutable() {
         Object(core.addPath)(Object(external_path_.dirname)(finalGodotPath));
     });
 }
+function getGodotVersion() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let version = '';
+        const options = {};
+        options.listeners = {
+            stdout: (data) => {
+                version += data.toString();
+            },
+        };
+        yield Object(exec.exec)('godot', ['--version'], options);
+        if (version.includes('.official')) {
+            version = version.replace('.official', '');
+        }
+        Object(core.info)(`Godot version is ${version}`);
+        return version;
+    });
+}
 function prepareTemplates() {
     return __awaiter(this, void 0, void 0, function* () {
         const templateFile = Object(external_path_.join)(actionWorkingPath, GODOT_TEMPLATES);
         const templatesPath = Object(external_path_.join)(actionWorkingPath, 'templates');
         const tmpPath = Object(external_path_.join)(actionWorkingPath, 'tmp');
+        const godotVersion = yield getGodotVersion();
         yield Object(exec.exec)('unzip', ['-q', templateFile, '-d', actionWorkingPath]);
         yield Object(exec.exec)('mv', [templatesPath, tmpPath]);
         yield Object(io.mkdirP)(templatesPath);
-        yield Object(exec.exec)('mv', [tmpPath, Object(external_path_.join)(templatesPath, godotTemplateVersion)]);
+        yield Object(exec.exec)('mv', [tmpPath, Object(external_path_.join)(templatesPath, godotVersion)]);
     });
 }
 function runExport() {
@@ -10549,7 +10567,6 @@ var external_os_ = __webpack_require__(87);
 
 // CONCATENATED MODULE: ./src/main.ts
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "actionWorkingPath", function() { return actionWorkingPath; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "godotTemplateVersion", function() { return godotTemplateVersion; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "relativeProjectPath", function() { return relativeProjectPath; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "relativeProjectExportsPath", function() { return relativeProjectExportsPath; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "githubClient", function() { return githubClient; });
@@ -10572,7 +10589,6 @@ var main_a;
 
 
 const actionWorkingPath = Object(external_path_.resolve)(Object(external_path_.join)(Object(external_os_.homedir)(), '/.local/share/godot'));
-const godotTemplateVersion = Object(core.getInput)('godot_template_version');
 const relativeProjectPath = Object(core.getInput)('relative_project_path');
 const shouldCreateRelease = Object(core.getInput)('create_release') === 'true';
 const relativeProjectExportsPath = Object(external_path_.join)(relativeProjectPath, 'exports');
@@ -10630,11 +10646,8 @@ function setupWorkingPath() {
 }
 function setupDependencies() {
     return main_awaiter(this, void 0, void 0, function* () {
-        const setups = [];
-        setups.push(setupExecutable());
-        setups.push(setupTemplates());
-        yield Promise.all(setups);
-        return 0;
+        yield setupExecutable();
+        yield setupTemplates();
     });
 }
 function getNewVersion() {

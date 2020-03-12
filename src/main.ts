@@ -8,7 +8,6 @@ import * as os from 'os';
 import { getRepositoryInfo } from './util';
 
 const actionWorkingPath = path.resolve(path.join(os.homedir(), '/.local/share/godot'));
-const godotTemplateVersion = core.getInput('godot_template_version');
 const relativeProjectPath = core.getInput('relative_project_path');
 const shouldCreateRelease = core.getInput('create_release') === 'true';
 const relativeProjectExportsPath = path.join(relativeProjectPath, 'exports');
@@ -68,13 +67,9 @@ async function setupWorkingPath(): Promise<void> {
   core.info(`Working path created ${actionWorkingPath}`);
 }
 
-async function setupDependencies(): Promise<number | Error> {
-  const setups: Promise<void>[] = [];
-
-  setups.push(setupExecutable());
-  setups.push(setupTemplates());
-  await Promise.all(setups);
-  return 0;
+async function setupDependencies(): Promise<void> {
+  await setupExecutable();
+  await setupTemplates();
 }
 
 async function getNewVersion(): Promise<semver.SemVer | null | undefined> {
@@ -116,4 +111,4 @@ function logAndExit(error: Error): void {
 
 main().catch(logAndExit);
 
-export { actionWorkingPath, godotTemplateVersion, relativeProjectPath, relativeProjectExportsPath, githubClient };
+export { actionWorkingPath, relativeProjectPath, relativeProjectExportsPath, githubClient };
